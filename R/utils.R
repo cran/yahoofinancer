@@ -3,6 +3,7 @@
 #' Validate symbols before retrieving data.
 #'
 #' @param symbol Ticker, index or fund name.
+#' @param index Deprecated. Use \code{symbol} instead.
 #'
 #' @examples
 #' validate("aapl")
@@ -10,7 +11,13 @@
 #'
 #' @export
 #'
-validate <- function(symbol = NULL) {
+validate <- function(symbol = NA, index = NA) {
+  if (!is.na(index)) {
+    warning("The 'index' parameter is deprecated. Please use 'symbol' instead.", call. = FALSE)
+    if (is.na(symbol)) symbol <- index
+  }
+
+  if (is.na(symbol)) return(invisible(NULL))
 
   base_url <- 'https://query2.finance.yahoo.com'
   path     <- 'v6/finance/quote/validate'
@@ -39,21 +46,13 @@ validate <- function(symbol = NULL) {
     )
     return(invisible(NULL))
   } else {
-    parsed %>%
-      use_series(symbolsValidation) %>%
-      use_series(result) %>%
-      extract2(1) %>%
-      extract2(1)
+    parsed$symbolsValidation$result[[1]][[1]]
   }
 
 }
 
 flatten_list <- function(x) {
-  unlist(lapply(x, function(m) ifelse(is.null(m), NA, m)))
+  if (is.null(x)) return(NULL)
+  unlist(lapply(x, function(m) if (is.null(m)) NA else m))
 }
 
-get_metric <- function(data, metric) {
-  data[[metric]] %>%
-    map(., ~ifelse(is.null(.x), NA, .x)) %>%
-    unlist()
-}

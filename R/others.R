@@ -41,10 +41,7 @@ get_currencies <- function() {
     return(invisible(NULL))
   } else {
 
-    data <-
-      parsed %>%
-      use_series(currencies) %>%
-      use_series(result)
+    data <- parsed$currencies$result
 
     data.frame(
       short_name      = map_chr(data, 'shortName'),
@@ -103,10 +100,8 @@ get_market_summary <- function(country = 'US') {
 
     return(invisible(NULL))
   } else {
-
-    parsed %>%
-      use_series(marketSummaryResponse) %>%
-      use_series(result)
+    
+    parsed$marketSummaryResponse$result
 
   }
 }
@@ -160,10 +155,7 @@ get_trending <- function(country = 'US', count = 10) {
     return(invisible(NULL))
   } else {
 
-    data <-
-      parsed %>%
-      use_series(finance) %>%
-      use_series(result)
+    data <- parsed$finance$result
 
     if (length(data) > 0) {
       data %>%
@@ -269,17 +261,9 @@ currency_converter <- function(from = 'EUR', to = 'USD', start = NULL, end = NUL
     return(invisible(NULL))
   } else {
 
-  data <-
-    parsed %>%
-    use_series(chart) %>%
-    use_series(result) %>%
-    extract2(1)
+  data <- parsed$chart$result[[1]]
 
-  indicators <-
-    data %>%
-    use_series(indicators) %>%
-    use_series(quote) %>%
-    extract2(1)
+  indicators <- data$indicators$quote[[1]]
 
   result <- data.frame(
     date   = as_datetime(unlist(data$timestamp)),
@@ -293,13 +277,10 @@ currency_converter <- function(from = 'EUR', to = 'USD', start = NULL, end = NUL
   intervals <- c('1d', '5d', '1wk', '1mo', '3mo')
 
   if (interval %in% intervals) {
-    adj_close <-
-      data %>%
-      use_series(indicators) %>%
-      use_series(adjclose) %>%
-      extract2(1) %>%
-      use_series(adjclose) %>%
-      unlist()
+    adj_close <- data$indicators$adjclose[[1]]$adjclose
+    null_adj  <- sapply(adj_close, is.null)
+    adj_close[null_adj] <- NA
+    adj_close <- unlist(adj_close)
 
     result$adj_close <- adj_close
 
